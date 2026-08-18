@@ -16,7 +16,7 @@ if not os.path.exists(VENV_PYTHON):
 
 
 def setup_environment():
-    """Ensures bin/ffmpeg.exe exists and is in PATH for all child processes."""
+    """Ensures ffmpeg is in PATH for all child processes."""
     os.makedirs(BIN_DIR, exist_ok=True)
     ffmpeg_exe = os.path.join(BIN_DIR, "ffmpeg.exe")
     
@@ -40,32 +40,38 @@ def main():
 
     print("=" * 60)
     print("   STARTING SRI CLIPS (PRODUCTION MODE)")
-    print(f"   Target Public Port: {port}")
+    print(f"   Public Port: {port}")
     print("=" * 60)
 
-    # Step 1: Build Next.js Production Bundle
-    print("\n[1/3] Building Next.js production bundle...")
-    build_cmd = "npx next build"
-    build_proc = subprocess.run(build_cmd, cwd=FRONTEND_DIR, shell=True)
-    if build_proc.returncode != 0:
-        print("Warning: Next.js build returned non-zero exit code. Proceeding with launch...")
+    # Step 1: Check if Next.js build folder exists, only build if missing
+    next_build_dir = os.path.join(FRONTEND_DIR, ".next")
+    if not os.path.exists(next_build_dir):
+        print("\n[1/3] Building Next.js production bundle...")
+        build_proc = subprocess.run("npx next build", cwd=FRONTEND_DIR, shell=True)
+        if build_proc.returncode != 0:
+            print("Warning: Next.js build returned non-zero code.")
+    else:
+        print("\n[1/3] Pre-built Next.js bundle found (.next). Skipping runtime build...")
 
-    # Step 2: Start FastAPI Production Server on internal 127.0.0.1:8000
-    print("\n[2/3] Starting FastAPI Backend on http://127.0.0.1:8000...")
+    # Step 2: Start FastAPI Production Server on 0.0.0.0:8000
+    print("\n[2/3] Starting FastAPI Backend on http://0.0.0.0:8000...")
     backend_cmd = [
-        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", "2"
+        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"
     ]
     backend_process = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, env=os.environ.copy())
 
+    # Short sleep to allow Uvicorn backend to bind port 8000
+    time.sleep(1.5)
+
     # Step 3: Start Next.js Production Server on public $PORT
-    print(f"[3/3] Starting Next.js Production Server on port {port}...")
+    print(f"\n[3/3] Starting Next.js Production Server on port {port}...")
     frontend_cmd = f"npx next start -p {port}"
     frontend_process = subprocess.Popen(frontend_cmd, cwd=FRONTEND_DIR, shell=True, env=os.environ.copy())
 
     print("\n" + "=" * 60)
-    print("   SRI CLIPS IS NOW RUNNING IN PRODUCTION MODE!")
-    print(f"   Public Web App: http://0.0.0.0:{port}")
-    print("   Internal API: http://127.0.0.1:8000")
+    print("   SRI CLIPS IS LIVE!")
+    print(f"   Public URL: http://0.0.0.0:{port}")
+    print("   FastAPI Internal: http://127.0.0.1:8000")
     print("=" * 60 + "\n")
 
     def signal_handler(sig, frame):
