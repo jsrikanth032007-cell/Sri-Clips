@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sri-clips:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sri-clips-app
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./temp_storage:/app/temp_storage
+    restart: unless-stopped

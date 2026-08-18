@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: sri-clips
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 3000
+    disk:
+      name: sri-clips-storage
+      mountPath: /app/temp_storage
+      sizeGB: 10

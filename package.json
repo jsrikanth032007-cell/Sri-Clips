@@ -1,0 +1,21 @@
+{
+  "name": "sri-clips",
+  "version": "1.0.0",
+  "description": "AI-powered YouTube viral short clip generator app",
+  "main": "run_app.py",
+  "scripts": {
+    "start": "python run_app.py",
+    "start:prod": "python run_production.py",
+    "dev": "python run_app.py"
+  },
+  "keywords": [
+    "youtube",
+    "shorts",
+    "viral-clips",
+    "whisper-ai",
+    "ffmpeg",
+    "yt-dlp"
+  ],
+  "author": "",
+  "license": "MIT"
+}
