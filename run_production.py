@@ -36,33 +36,36 @@ def setup_environment():
 def main():
     setup_environment()
 
+    port = os.environ.get("PORT", "3000")
+
     print("=" * 60)
     print("   STARTING SRI CLIPS (PRODUCTION MODE)")
+    print(f"   Target Public Port: {port}")
     print("=" * 60)
 
     # Step 1: Build Next.js Production Bundle
     print("\n[1/3] Building Next.js production bundle...")
-    build_cmd = "npm run build"
+    build_cmd = "npx next build"
     build_proc = subprocess.run(build_cmd, cwd=FRONTEND_DIR, shell=True)
     if build_proc.returncode != 0:
-        print("Warning: Next.js build failed or returned non-zero code. Proceeding with launch...")
+        print("Warning: Next.js build returned non-zero exit code. Proceeding with launch...")
 
-    # Step 2: Start FastAPI Production Server
-    print("\n[2/3] Starting FastAPI Backend on http://0.0.0.0:8000...")
+    # Step 2: Start FastAPI Production Server on internal 127.0.0.1:8000
+    print("\n[2/3] Starting FastAPI Backend on http://127.0.0.1:8000...")
     backend_cmd = [
-        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"
+        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", "2"
     ]
     backend_process = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, env=os.environ.copy())
 
-    # Step 3: Start Next.js Production Server
-    print("[3/3] Starting Next.js Production Server on http://0.0.0.0:3000...")
-    frontend_cmd = "npm run start"
+    # Step 3: Start Next.js Production Server on public $PORT
+    print(f"[3/3] Starting Next.js Production Server on port {port}...")
+    frontend_cmd = f"npx next start -p {port}"
     frontend_process = subprocess.Popen(frontend_cmd, cwd=FRONTEND_DIR, shell=True, env=os.environ.copy())
 
     print("\n" + "=" * 60)
     print("   SRI CLIPS IS NOW RUNNING IN PRODUCTION MODE!")
-    print("   Access UI: http://localhost:3000")
-    print("   API Server: http://localhost:8000")
+    print(f"   Public Web App: http://0.0.0.0:{port}")
+    print("   Internal API: http://127.0.0.1:8000")
     print("=" * 60 + "\n")
 
     def signal_handler(sig, frame):
