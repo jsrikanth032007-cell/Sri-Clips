@@ -40,6 +40,7 @@ def main():
 
     print("=" * 60)
     print("   STARTING SRI CLIPS (PRODUCTION MODE)")
+    print(f"   Python Executable: {VENV_PYTHON}")
     print(f"   Public Port: {port}")
     print("=" * 60)
 
@@ -56,12 +57,12 @@ def main():
     # Step 2: Start FastAPI Production Server on 0.0.0.0:8000
     print("\n[2/3] Starting FastAPI Backend on http://0.0.0.0:8000...")
     backend_cmd = [
-        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"
+        VENV_PYTHON, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"
     ]
     backend_process = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, env=os.environ.copy())
 
-    # Short sleep to allow Uvicorn backend to bind port 8000
-    time.sleep(1.5)
+    # Wait for Uvicorn backend to bind port 8000
+    time.sleep(2.0)
 
     # Step 3: Start Next.js Production Server on public $PORT
     print(f"\n[3/3] Starting Next.js Production Server on port {port}...")
@@ -70,7 +71,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("   SRI CLIPS IS LIVE!")
-    print(f"   Public URL: http://0.0.0.0:{port}")
+    print(f"   Public Web App: http://0.0.0.0:{port}")
     print("   FastAPI Internal: http://127.0.0.1:8000")
     print("=" * 60 + "\n")
 
@@ -87,11 +88,18 @@ def main():
         while True:
             time.sleep(1)
             if backend_process.poll() is not None:
-                print("Backend process stopped.")
-                break
+                print(f"WARNING: Backend process exited with code {backend_process.poll()}!")
+                # Restart backend if it crashed unexpectedly
+                print("Attempting to restart FastAPI Backend...")
+                backend_process = subprocess.Popen(backend_cmd, cwd=BACKEND_DIR, env=os.environ.copy())
+                time.sleep(2.0)
+
             if frontend_process.poll() is not None:
-                print("Frontend process stopped.")
-                break
+                print(f"WARNING: Frontend process exited with code {frontend_process.poll()}!")
+                print("Attempting to restart Next.js Frontend...")
+                frontend_process = subprocess.Popen(frontend_cmd, cwd=FRONTEND_DIR, shell=True, env=os.environ.copy())
+                time.sleep(2.0)
+
     except KeyboardInterrupt:
         pass
     finally:

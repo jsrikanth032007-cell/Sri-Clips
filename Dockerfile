@@ -2,9 +2,11 @@
 
 FROM python:3.11-slim as base
 
-# Install system dependencies (FFmpeg, Node.js, Git, Curl)
+# Install system dependencies (FFmpeg, OpenMP libgomp1 for CTranslate2, libsndfile1, Node.js 20, Git, Curl)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    libgomp1 \
+    libsndfile1 \
     curl \
     git \
     build-essential \
